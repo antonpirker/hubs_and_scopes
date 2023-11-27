@@ -19,18 +19,18 @@ def main():
     # new scope
     scope = sentry_sdk.get_current_scope()
     scope.set_tag("tag1", "1")
-    print(f"Current scope before: {scope} / tags: {scope.get_tags()} ({id(scope._tags)})")
     assert scope.get_tags() == {"tag1": "1"}
+    print(f"Current scope before: {scope} / tags: {scope.get_tags()} ({id(scope._tags)})")
 
-    with sentry_sdk.new_scope() as scope:
+    with sentry_sdk.new_scope() as scope:  # did not call it "withScope" this sounds more natural
         scope.set_tag("tag2", "2")
-        print(f"New scope: {scope} / tags: {scope.get_tags()} ({id(scope._tags)})")
         assert scope.get_tags() == {"tag1": "1", "tag2": "2"}
+        print(f"New scope: {scope} / tags: {scope.get_tags()} ({id(scope._tags)})")
 
     scope = sentry_sdk.get_current_scope()
     scope.set_tag("tag3", "3")
-    print(f"Current scope after: {scope} / tags: {scope.get_tags()} ({id(scope._tags)})")
     assert scope.get_tags() == {"tag1": "1", "tag3": "3"}
+    print(f"Current scope after: {scope} / tags: {scope.get_tags()} ({id(scope._tags)})")
 
 
 if __name__ == '__main__':
