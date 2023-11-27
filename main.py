@@ -20,14 +20,17 @@ def main():
     scope = sentry_sdk.get_current_scope()
     scope.set_tag("tag1", "1")
     print(f"Current scope before: {scope} / tags: {scope.get_tags()} ({id(scope._tags)})")
+    assert scope.get_tags() == {"tag1": "1"}
 
     with sentry_sdk.new_scope() as scope:
         scope.set_tag("tag2", "2")
         print(f"New scope: {scope} / tags: {scope.get_tags()} ({id(scope._tags)})")
+        assert scope.get_tags() == {"tag1": "1", "tag2": "2"}
 
     scope = sentry_sdk.get_current_scope()
     scope.set_tag("tag3", "3")
     print(f"Current scope after: {scope} / tags: {scope.get_tags()} ({id(scope._tags)})")
+    assert scope.get_tags() == {"tag1": "1", "tag3": "3"}
 
 
 if __name__ == '__main__':
