@@ -1,9 +1,11 @@
 from copy import copy
 from functools import wraps
 
-from data import sentry_current_scope, sentry_isolation_scope, sentry_global_scope, sentry_global_client
+import data
+from data import sentry_current_scope, sentry_isolation_scope
 
 
+# TODO: check otel impl
 def copy_on_write(property_name):
     """
     Decorator that implements copy on write on a property of a class.
@@ -28,13 +30,11 @@ def copy_on_write(property_name):
     return decorator
 
 
-
 class Scope:
     def __init__(self, ty, client=None):
-        self._ty = ty
+        self._ty = ty  # this is just for debugging, not used in actual implementation
         self._tags = {}
-        # TODO: instead of sentry_global_client use sentry_global_scope.client
-        self.set_client(client or sentry_global_client.get(None))
+        self.set_client(client or data.GLOBAL_SCOPE and data.GLOBAL_SCOPE.client or None)
 
     def __repr__(self):
         return f"<{self.__class__.__name__} id={id(self)} ty={self._ty}>"
@@ -83,10 +83,10 @@ class Scope:
 
     @classmethod    
     def get_global_scope(cls):
-        scope = sentry_global_scope.get(None)
+        scope = data.GLOBAL_SCOPE
         if scope is None:
             scope = Scope(ty='global')
-            sentry_global_scope.set(scope)
+            data.GLOBAL_SCOPE = scope
 
         return scope
 

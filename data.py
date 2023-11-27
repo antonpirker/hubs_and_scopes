@@ -3,9 +3,11 @@
 # in here it is this: 
 from contextvars import ContextVar
 
-# useless. can be just in the sentry_global_scope context var
-sentry_global_client = ContextVar("sentry_global_client")
+# global scope over everything
+GLOBAL_SCOPE = None
 
-sentry_current_scope = ContextVar("sentry_current_scope")
+# created by integrations (where we clone the Hub now)
 sentry_isolation_scope = ContextVar("sentry_isolation_scope")
-sentry_global_scope = ContextVar("sentry_global_scope")
+
+# cloned for threads/tasks/...
+sentry_current_scope = ContextVar("sentry_current_scope")
