@@ -10,4 +10,4 @@
 
 Until here nothing should be breaking
 
-- Remove the aliases and rename `NewScope` to `Scope` and `NewClient` to `Client`. Remove `Hub`. THIS IS BREAKING AND NEEDS A MAJOR
+- Remove the aliases and rename `NewScope` to `Scope` and `NewClient` to `Client`. Remove `Hub`. Update Docs. THIS IS BREAKING AND NEEDS A MAJOR
