@@ -33,6 +33,7 @@ class Scope:
     def __init__(self, ty, client=None):
         self._ty = ty
         self._tags = {}
+        # TODO: instead of sentry_global_client use sentry_global_scope.client
         self.set_client(client or sentry_global_client.get(None))
 
     def __repr__(self):
