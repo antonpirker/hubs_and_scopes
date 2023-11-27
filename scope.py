@@ -18,9 +18,10 @@ def copy_on_write(property_name):
 
             same_property_different_scope = (
                 id(self) != id(current_scope) and 
-                id(getattr(self, property_name)) == id(getattr(sentry_current_scope.get(None), property_name))
+                id(getattr(self, property_name)) == id(getattr(current_scope, property_name))
             )
             if same_property_different_scope:
+                # TODO: need to check if shallow copy is ok here. (Check all writable attributes in Scope class)
                 setattr(self, property_name, copy(getattr(self, property_name)))
 
             return func(*args, **kwargs)
