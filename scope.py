@@ -1,4 +1,6 @@
 import copy
+from contextlib import contextmanager
+from contextvars import copy_context
 from functools import wraps
 
 import data
@@ -49,10 +51,9 @@ def copy_on_write(property_name):
             self = args[0]
             current_scope = sentry_current_scope.get()
 
-            print(f"copy on write decorator: {self} / {current_scope}")
             same_property_different_scope = (
-                id(self) != id(current_scope) and 
-                id(getattr(self, property_name)) == id(getattr(current_scope, property_name))
+                self.is_forked and
+                id(getattr(self, property_name)) == id(getattr(self.original_scope, property_name))
             )
             if same_property_different_scope:
                 # Probably a deep copy is better, because some attributes reference non-primitive types. (Breadcrumbs, Attachments, EventProcessor, ErrorProcessor)
@@ -71,6 +72,7 @@ class Scope:
         self._ty = ty  # this is just for debugging, not used in actual implementation
         self._tags = {}
         self.set_client(client or data.GLOBAL_SCOPE and data.GLOBAL_SCOPE.client or None)
+        self.original_scope = None
 
     def __repr__(self):
         return f"<{self.__class__.__name__} id={id(self)} ty={self._ty}>"
@@ -83,7 +85,12 @@ class Scope:
         self._tags[key] = value
 
     def fork(self):
+        self.original_scope = self
         return copy.copy(self)
+    
+    @property
+    def is_forked(self):
+        return self.original_scope is not None
 
     def capture_event(self, event, aditional_data=None):
         data = {}
@@ -128,27 +135,35 @@ class Scope:
         return scope
 
 
-class new_scope:
-    def __enter__(self):
-        current_scope = Scope.get_current_scope()
-        forked_scope = current_scope.fork()
+def with_new_scope(*args, **kwargs):
+    current_scope = Scope.get_current_scope()
+    forked_scope = current_scope.fork()
 
-        self.token = sentry_current_scope.set(forked_scope)
-
-        return forked_scope
-
-    def __exit__(self, exc_type, exc_value, tb):
-        sentry_current_scope.reset(self.token)
+    token = sentry_current_scope.set(forked_scope)
+    try:
+        yield forked_scope
+    finally:
+        sentry_current_scope.reset(token)       
 
 
-class isolated_scope:
-    def __enter__(self):
-        current_isolation_scope = Scope.get_isolation_scope()
-        forked_isolation_scope = current_isolation_scope.fork()
+@contextmanager
+def new_scope(*args, **kwargs):
+    ctx = copy_context()
+    return ctx.run(with_new_scope, *args, **kwargs)
 
-        self.token = sentry_isolation_scope.set(forked_isolation_scope)
 
-        return forked_isolation_scope
+def with_isolated_scope(*args, **kwargs):
+    isolation_scope = Scope.get_isolation_scope()
+    forked_isolation_scope = isolation_scope.fork()
 
-    def __exit__(self, exc_type, exc_value, tb):
-        sentry_isolation_scope.reset(self.token)
+    token = sentry_isolation_scope.set(forked_isolation_scope)
+    try:
+        yield forked_isolation_scope
+    finally:
+        sentry_isolation_scope.reset(token)       
+
+
+@contextmanager
+def isolated_scope(*args, **kwargs):
+    ctx = copy_context()
+    return ctx.run(with_isolated_scope, *args, **kwargs)
