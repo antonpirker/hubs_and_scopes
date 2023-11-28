@@ -118,18 +118,22 @@ class Scope:
 
     def get_scope_data(self):
         return self._tags
+    
+    def get_merged_scope_data(self, aditional_data=None):
+        data = {}
+        data.update(Scope.get_global_scope().get_scope_data())
+        data.update(Scope.get_isolation_scope().get_scope_data())
+        data.update(self.get_scope_data())
+        data.update(aditional_data or {})
+
+        return data
 
     @copy_on_write("_tags")
     def set_tag(self, key, value):
         self._tags[key] = value
   
     def capture_event(self, event, aditional_data=None):
-        data = {}
-        data.update(Scope.get_global_scope().get_scope_data())
-        data.update(Scope.get_isolation_scope().get_scope_data())
-        data.update(self.get_scope_data())
-        data.update(aditional_data or {})
-        
+        data = self.get_merged_scope_data(aditional_data=aditional_data)
         print(f"Captured event {event} / data: {data}")
  
 
