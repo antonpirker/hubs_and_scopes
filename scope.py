@@ -73,7 +73,7 @@ class Scope:
         self.original_scope = None
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} id={id(self)} ty={self._ty}>"
+        return "<{} id={} ty={}>".format(self.__class__.__name__, id(self), self._ty)
     
     @classmethod    
     def get_current_scope(cls):
@@ -140,7 +140,7 @@ class Scope:
   
     def capture_event(self, event, aditional_data=None):
         data = self.get_merged_scope_data(aditional_data=aditional_data)
-        print(f"Captured event {event} / data: {data}")
+        print("Captured event {} / data: {}".format(event, data))
  
 
 def with_new_scope(*args, **kwargs):

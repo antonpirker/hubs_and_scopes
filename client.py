@@ -3,12 +3,12 @@ from scope import Scope
 
 class NoopClient:
     def __repr__(self):
-        return f"<{self.__class__.__name__} id={id(self)}>"
+        return "<{} id={}>".format(self.__class__.__name__, id(self))
 
 
 class Client(NoopClient):
     def __repr__(self):
-        return f"<{self.__class__.__name__} id={id(self)}>"
+        return "<{} id={}>".format(self.__class__.__name__, id(self))
     
     @classmethod
     def get_client(cls):
