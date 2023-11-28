@@ -1,4 +1,4 @@
-from copy import copy
+import copy
 from functools import wraps
 
 import data
@@ -56,7 +56,7 @@ def copy_on_write(property_name):
             if same_property_different_scope:
                 # Probably a deep copy is better, because some attributes reference non-primitive types. (Breadcrumbs, Attachments, EventProcessor, ErrorProcessor)
                 # see big comment above.
-                setattr(self, property_name, copy(getattr(self, property_name)))
+                setattr(self, property_name, copy.deepcopy(getattr(self, property_name)))
 
             return func(*args, **kwargs)
 
@@ -82,15 +82,15 @@ class Scope:
         self._tags[key] = value
 
     def fork(self):
-        return copy(self)
+        return copy.copy(self)
 
     def capture_event(self, event, aditional_data=None):
-        data = Scope.get_global_scope().get_scope_data()
-        data.update(Scope.get_isolation_scope.get_scope_data())
-        data.update(Scope.get_current_scope().get_scope_data())
+        data = copy.deepcopy(Scope.get_global_scope().get_scope_data())
+        data.update(Scope.get_isolation_scope().get_scope_data())
+        data.update(self.get_scope_data())
         data.update(aditional_data or {})
         
-        print(f"Captured {event} / data: {data}")
+        print(f"Captured event {event} / data: {data}")
  
     def get_tags(self):
         return self._tags
@@ -132,6 +132,16 @@ class new_scope:
         forked_scope = current_scope.fork()
 
         return forked_scope
+
+    def __exit__(self, exc_type, exc_value, tb):
+        ...
+
+class isolated_scope:
+    def __enter__(self):
+        current_isolation_scope = Scope.get_isolation_scope()
+        forked_isolation_scope = current_isolation_scope.fork()
+
+        return forked_isolation_scope
 
     def __exit__(self, exc_type, exc_value, tb):
         ...
