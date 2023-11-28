@@ -56,8 +56,6 @@ def copy_on_write(property_name):
                 id(getattr(self, property_name)) == id(getattr(self.original_scope, property_name))
             )
             if same_property_different_scope:
-                # Probably a deep copy is better, because some attributes reference non-primitive types. (Breadcrumbs, Attachments, EventProcessor, ErrorProcessor)
-                # see big comment above.
                 setattr(self, property_name, copy.deepcopy(getattr(current_scope, property_name)))
 
             return func(*args, **kwargs)
@@ -77,36 +75,6 @@ class Scope:
     def __repr__(self):
         return f"<{self.__class__.__name__} id={id(self)} ty={self._ty}>"
     
-    def set_client(self, client):
-        self.client = client
-
-    @copy_on_write("_tags")
-    def set_tag(self, key, value):
-        self._tags[key] = value
-
-    def fork(self):
-        self.original_scope = self
-        return copy.copy(self)
-    
-    @property
-    def is_forked(self):
-        return self.original_scope is not None
-
-    def capture_event(self, event, aditional_data=None):
-        data = {}
-        data.update(Scope.get_global_scope().get_scope_data())
-        data.update(Scope.get_isolation_scope().get_scope_data())
-        data.update(self.get_scope_data())
-        data.update(aditional_data or {})
-        
-        print(f"Captured event {event} / data: {data}")
- 
-    def get_tags(self):
-        return self._tags
-
-    def get_scope_data(self):
-        return self._tags
-
     @classmethod    
     def get_current_scope(cls):
         scope = sentry_current_scope.get()
@@ -133,7 +101,37 @@ class Scope:
             data.GLOBAL_SCOPE = scope
 
         return scope
+        
+    @property
+    def is_forked(self):
+        return self.original_scope is not None
+    
+    def fork(self):
+        self.original_scope = self
+        return copy.copy(self)
 
+    def set_client(self, client):
+        self.client = client
+
+    def get_tags(self):
+        return self._tags
+
+    def get_scope_data(self):
+        return self._tags
+
+    @copy_on_write("_tags")
+    def set_tag(self, key, value):
+        self._tags[key] = value
+  
+    def capture_event(self, event, aditional_data=None):
+        data = {}
+        data.update(Scope.get_global_scope().get_scope_data())
+        data.update(Scope.get_isolation_scope().get_scope_data())
+        data.update(self.get_scope_data())
+        data.update(aditional_data or {})
+        
+        print(f"Captured event {event} / data: {data}")
+ 
 
 def with_new_scope(*args, **kwargs):
     current_scope = Scope.get_current_scope()
