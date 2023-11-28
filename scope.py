@@ -47,8 +47,9 @@ def copy_on_write(property_name):
         @wraps(func)
         def wrapper(*args, **kwargs):
             self = args[0]
-            current_scope = sentry_current_scope.get(None)
+            current_scope = sentry_current_scope.get()
 
+            print(f"copy on write decorator: {self} / {current_scope}")
             same_property_different_scope = (
                 id(self) != id(current_scope) and 
                 id(getattr(self, property_name)) == id(getattr(current_scope, property_name))
@@ -56,7 +57,7 @@ def copy_on_write(property_name):
             if same_property_different_scope:
                 # Probably a deep copy is better, because some attributes reference non-primitive types. (Breadcrumbs, Attachments, EventProcessor, ErrorProcessor)
                 # see big comment above.
-                setattr(self, property_name, copy.deepcopy(getattr(self, property_name)))
+                setattr(self, property_name, copy.deepcopy(getattr(current_scope, property_name)))
 
             return func(*args, **kwargs)
 
@@ -101,7 +102,7 @@ class Scope:
 
     @classmethod    
     def get_current_scope(cls):
-        scope = sentry_current_scope.get(None)
+        scope = sentry_current_scope.get()
         if scope is None:
             scope = Scope(ty='current')
             sentry_current_scope.set(scope)
@@ -110,7 +111,7 @@ class Scope:
 
     @classmethod    
     def get_isolation_scope(cls):
-        scope = sentry_isolation_scope.get(None)
+        scope = sentry_isolation_scope.get()
         if scope is None:
             scope = Scope(ty='isolation')
             sentry_isolation_scope.set(scope)
