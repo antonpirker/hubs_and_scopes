@@ -85,7 +85,8 @@ class Scope:
         return copy.copy(self)
 
     def capture_event(self, event, aditional_data=None):
-        data = copy.deepcopy(Scope.get_global_scope().get_scope_data())
+        data = {}
+        data.update(Scope.get_global_scope().get_scope_data())
         data.update(Scope.get_isolation_scope().get_scope_data())
         data.update(self.get_scope_data())
         data.update(aditional_data or {})
