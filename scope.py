@@ -132,17 +132,22 @@ class new_scope:
         current_scope = Scope.get_current_scope()
         forked_scope = current_scope.fork()
 
+        self.token = sentry_current_scope.set(forked_scope)
+
         return forked_scope
 
     def __exit__(self, exc_type, exc_value, tb):
-        ...
+        sentry_current_scope.reset(self.token)
+
 
 class isolated_scope:
     def __enter__(self):
         current_isolation_scope = Scope.get_isolation_scope()
         forked_isolation_scope = current_isolation_scope.fork()
 
+        self.token = sentry_isolation_scope.set(forked_isolation_scope)
+
         return forked_isolation_scope
 
     def __exit__(self, exc_type, exc_value, tb):
-        ...
+        sentry_isolation_scope.reset(self.token)

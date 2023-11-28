@@ -19,26 +19,22 @@ def main():
     # new scope
     scope = sentry_sdk.get_current_scope()
     scope.set_tag("tag1", "1")
+    print(f"X scope: {scope}")
     assert scope.get_tags() == {"tag1": "1"}
-    scope.capture_event({"name": "event1"})
+    sentry_sdk.capture_event({"name": "event1"})
 
     with sentry_sdk.new_scope() as scope:  # did not call it "withScope" this sounds more natural
         scope.set_tag("tag2", "2")
+        print(f"X scope: {scope}")
         assert scope.get_tags() == {"tag1": "1", "tag2": "2"}
-        scope.capture_event({"name": "event2"})
+        sentry_sdk.capture_event({"name": "event2"}) 
 
     scope = sentry_sdk.get_current_scope()
+    print(f"X scope: {scope}")
     scope.set_tag("tag3", "3")
-    assert scope.get_tags() == {"tag1": "1", "tag3": "3"}
-    scope.capture_event({"name": "event3"})
+    assert scope.get_tags() == {"tag1": "1", "tag3": "3"} # this fails, something is wrong with scope forking and copy on write
+    sentry_sdk.capture_event({"name": "event3"})
 
-    # isolation scope should be empty
-    scope = sentry_sdk.get_isolation_scope()
-    scope.capture_event({"name": "event4"})
-
-    # global scope should be empty
-    scope = sentry_sdk.get_global_scope()
-    scope.capture_event({"name": "event5"})
 
 if __name__ == '__main__':
     main()

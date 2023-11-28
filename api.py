@@ -28,3 +28,9 @@ def get_isolation_scope():
 
 def get_global_scope():
     return Scope.get_global_scope()
+
+
+def capture_event(event, additional_data=None):
+    scope = Scope.get_current_scope()
+    print(f"Capture event scope: {scope}")
+    return scope.capture_event(event, additional_data)
