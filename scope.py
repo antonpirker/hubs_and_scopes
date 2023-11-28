@@ -109,6 +109,12 @@ class Scope:
     def fork(self):
         self.original_scope = self
         return copy.copy(self)
+    
+    def isolate(self):
+        # fork isolation scope
+        isolation_scope = Scope.get_isolation_scope()
+        forked_isolation_scope = isolation_scope.fork()
+        sentry_isolation_scope.set(forked_isolation_scope)
 
     def set_client(self, client):
         self.client = client
@@ -138,13 +144,16 @@ class Scope:
  
 
 def with_new_scope(*args, **kwargs):
+    # fork current scope
     current_scope = Scope.get_current_scope()
     forked_scope = current_scope.fork()
-
     token = sentry_current_scope.set(forked_scope)
+
     try:
         yield forked_scope
+    
     finally:
+        # restore original scope
         sentry_current_scope.reset(token)       
 
 
@@ -155,14 +164,23 @@ def new_scope(*args, **kwargs):
 
 
 def with_isolated_scope(*args, **kwargs):
+    # fork current scope
+    current_scope = Scope.get_current_scope()
+    forked_current_scope = current_scope.fork()
+    current_token = sentry_current_scope.set(forked_current_scope)
+
+    # fork isolation scope
     isolation_scope = Scope.get_isolation_scope()
     forked_isolation_scope = isolation_scope.fork()
+    isolation_token = sentry_isolation_scope.set(forked_isolation_scope)
 
-    token = sentry_isolation_scope.set(forked_isolation_scope)
     try:
         yield forked_isolation_scope
+    
     finally:
-        sentry_isolation_scope.reset(token)       
+        # restore original scopes
+        sentry_current_scope.reset(current_token)
+        sentry_isolation_scope.reset(isolation_token)       
 
 
 @contextmanager
