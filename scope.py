@@ -1,5 +1,5 @@
 import copy
-from contextlib import contextmanager
+from contextlib import contextmanager, asynccontextmanager
 from contextvars import copy_context
 from functools import wraps
 
@@ -163,6 +163,21 @@ def new_scope(*args, **kwargs):
     return ctx.run(with_new_scope, *args, **kwargs)
 
 
+@asynccontextmanager
+async def anew_scope(*args, **kwargs):
+    # fork current scope
+    current_scope = Scope.get_current_scope()
+    forked_scope = current_scope.fork()
+    token = sentry_current_scope.set(forked_scope)
+
+    try:
+        yield forked_scope
+    
+    finally:
+        # restore original scope
+        sentry_current_scope.reset(token)       
+
+
 def with_isolated_scope(*args, **kwargs):
     # fork current scope
     current_scope = Scope.get_current_scope()
@@ -187,3 +202,24 @@ def with_isolated_scope(*args, **kwargs):
 def isolated_scope(*args, **kwargs):
     ctx = copy_context()
     return ctx.run(with_isolated_scope, *args, **kwargs)
+
+
+@asynccontextmanager
+async def aisolated_scope(*args, **kwargs):
+    # fork current scope
+    current_scope = Scope.get_current_scope()
+    forked_current_scope = current_scope.fork()
+    current_token = sentry_current_scope.set(forked_current_scope)
+
+    # fork isolation scope
+    isolation_scope = Scope.get_isolation_scope()
+    forked_isolation_scope = isolation_scope.fork()
+    isolation_token = sentry_isolation_scope.set(forked_isolation_scope)
+
+    try:
+        yield forked_isolation_scope
+    
+    finally:
+        # restore original scopes
+        sentry_current_scope.reset(current_token)
+        sentry_isolation_scope.reset(isolation_token)       
