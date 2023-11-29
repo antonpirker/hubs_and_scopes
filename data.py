@@ -1,4 +1,4 @@
-from utils import ContextVar
+from contextvars import ContextVar
 
 # global scope over everything
 GLOBAL_SCOPE = None

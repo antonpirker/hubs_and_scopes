@@ -34,3 +34,7 @@ def get_global_scope():
 def capture_event(event, additional_data=None):
     scope = Scope.get_current_scope()
     return scope.capture_event(event, additional_data)
+
+
+def set_tag(key, value):
+    return Scope.get_isolation_scope().set_tag(key, value)

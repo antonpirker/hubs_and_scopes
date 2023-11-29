@@ -69,7 +69,7 @@ class Scope:
     def __init__(self, ty=None, client=None):
         self._ty = ty  # this is just for debugging, not used in actual implementation
         self._tags = {}
-        self._original_scope = None
+        self.original_scope = None
 
         self.set_client(client)
 
@@ -105,10 +105,10 @@ class Scope:
         
     @property
     def is_forked(self):
-        return self._original_scope is not None
+        return self.original_scope is not None
     
     def fork(self):
-        self._original_scope = self
+        self.original_scope = self
         return copy.copy(self)
     
     def isolate(self):
