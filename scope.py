@@ -131,7 +131,11 @@ class Scope:
         data.update(Scope.get_global_scope().get_scope_data())
         data.update(Scope.get_isolation_scope().get_scope_data())
         data.update(self.get_scope_data())
-        data.update(aditional_data or {})
+
+        if isinstance(aditional_data, Scope):
+            data.update(aditional_data.get_scope_data())
+        elif isinstance(aditional_data, dict):
+            data.update(aditional_data)
 
         return data
 
