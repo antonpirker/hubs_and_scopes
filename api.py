@@ -2,8 +2,9 @@ from client import Client, NoopClient
 from scope import Scope
 
 
-def init():
-    Scope.get_global_scope().set_client(Client())
+def init(*args, **kwargs):
+    client = Client(*args, **kwargs)
+    Scope.get_global_scope().set_client(client)
 
 
 def sentry_is_initialized():

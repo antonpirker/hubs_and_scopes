@@ -1,6 +1,6 @@
 import copy
-from contextlib import contextmanager, asynccontextmanager
-from contextvars import copy_context
+from contextlib import contextmanager
+from contextvars import copy_context  # This does not exist in Python 2.7
 from functools import wraps
 
 import data
@@ -66,11 +66,12 @@ def copy_on_write(property_name):
 
 
 class Scope:
-    def __init__(self, ty, client=None):
+    def __init__(self, ty=None, client=None):
         self._ty = ty  # this is just for debugging, not used in actual implementation
         self._tags = {}
-        self.set_client(client or data.GLOBAL_SCOPE and data.GLOBAL_SCOPE.client or None)
-        self.original_scope = None
+        self._original_scope = None
+
+        self.set_client(client)
 
     def __repr__(self):
         return "<{} id={} ty={}>".format(self.__class__.__name__, id(self), self._ty)
@@ -104,10 +105,10 @@ class Scope:
         
     @property
     def is_forked(self):
-        return self.original_scope is not None
+        return self._original_scope is not None
     
     def fork(self):
-        self.original_scope = self
+        self._original_scope = self
         return copy.copy(self)
     
     def isolate(self):
@@ -159,7 +160,7 @@ def with_new_scope(*args, **kwargs):
 
 @contextmanager
 def new_scope(*args, **kwargs):
-    ctx = copy_context()
+    ctx = copy_context()  # This does not exist in Python 2.7
     return ctx.run(with_new_scope, *args, **kwargs)
 
 
@@ -189,39 +190,39 @@ def isolated_scope(*args, **kwargs):
     return ctx.run(with_isolated_scope, *args, **kwargs)
 
 
-# not used yet
-@asynccontextmanager
-async def anew_scope(*args, **kwargs):
-    # fork current scope
-    current_scope = Scope.get_current_scope()
-    forked_scope = current_scope.fork()
-    token = sentry_current_scope.set(forked_scope)
+# # not used yet
+# @asynccontextmanager
+# async def anew_scope(*args, **kwargs):
+#     # fork current scope
+#     current_scope = Scope.get_current_scope()
+#     forked_scope = current_scope.fork()
+#     token = sentry_current_scope.set(forked_scope)
 
-    try:
-        yield forked_scope
+#     try:
+#         yield forked_scope
     
-    finally:
-        # restore original scope
-        sentry_current_scope.reset(token)       
+#     finally:
+#         # restore original scope
+#         sentry_current_scope.reset(token)       
 
 
-# not used yet
-@asynccontextmanager
-async def aisolated_scope(*args, **kwargs):
-    # fork current scope
-    current_scope = Scope.get_current_scope()
-    forked_current_scope = current_scope.fork()
-    current_token = sentry_current_scope.set(forked_current_scope)
+# # not used yet
+# @asynccontextmanager
+# async def aisolated_scope(*args, **kwargs):
+#     # fork current scope
+#     current_scope = Scope.get_current_scope()
+#     forked_current_scope = current_scope.fork()
+#     current_token = sentry_current_scope.set(forked_current_scope)
 
-    # fork isolation scope
-    isolation_scope = Scope.get_isolation_scope()
-    forked_isolation_scope = isolation_scope.fork()
-    isolation_token = sentry_isolation_scope.set(forked_isolation_scope)
+#     # fork isolation scope
+#     isolation_scope = Scope.get_isolation_scope()
+#     forked_isolation_scope = isolation_scope.fork()
+#     isolation_token = sentry_isolation_scope.set(forked_isolation_scope)
 
-    try:
-        yield forked_isolation_scope
+#     try:
+#         yield forked_isolation_scope
     
-    finally:
-        # restore original scopes
-        sentry_current_scope.reset(current_token)
-        sentry_isolation_scope.reset(isolation_token)       
+#     finally:
+#         # restore original scopes
+#         sentry_current_scope.reset(current_token)
+#         sentry_isolation_scope.reset(isolation_token)       

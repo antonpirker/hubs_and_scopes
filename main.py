@@ -21,7 +21,6 @@ def main():
     assert sentry_sdk.Scope.get_current_scope().get_merged_scope_data() == {"gtag1": "g1"}  # this is what sentry_sdk.capure_event() sends.
     sentry_sdk.capture_event({"name": "gevent1"})
 
-
     with sentry_sdk.isolated_scope() as isolated_scope:
         isolated_scope.set_tag("itag2", "i1")
         assert isolated_scope.get_tags() == {"itag2": "i1"}

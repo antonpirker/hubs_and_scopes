@@ -1,7 +1,4 @@
-# in real sentry: 
-#from sentry_sdk.utils import ContextVar
-# in here it is this: 
-from contextvars import ContextVar
+from utils import ContextVar
 
 # global scope over everything
 GLOBAL_SCOPE = None
