@@ -163,21 +163,6 @@ def new_scope(*args, **kwargs):
     return ctx.run(with_new_scope, *args, **kwargs)
 
 
-@asynccontextmanager
-async def anew_scope(*args, **kwargs):
-    # fork current scope
-    current_scope = Scope.get_current_scope()
-    forked_scope = current_scope.fork()
-    token = sentry_current_scope.set(forked_scope)
-
-    try:
-        yield forked_scope
-    
-    finally:
-        # restore original scope
-        sentry_current_scope.reset(token)       
-
-
 def with_isolated_scope(*args, **kwargs):
     # fork current scope
     current_scope = Scope.get_current_scope()
@@ -204,6 +189,23 @@ def isolated_scope(*args, **kwargs):
     return ctx.run(with_isolated_scope, *args, **kwargs)
 
 
+# not used yet
+@asynccontextmanager
+async def anew_scope(*args, **kwargs):
+    # fork current scope
+    current_scope = Scope.get_current_scope()
+    forked_scope = current_scope.fork()
+    token = sentry_current_scope.set(forked_scope)
+
+    try:
+        yield forked_scope
+    
+    finally:
+        # restore original scope
+        sentry_current_scope.reset(token)       
+
+
+# not used yet
 @asynccontextmanager
 async def aisolated_scope(*args, **kwargs):
     # fork current scope
