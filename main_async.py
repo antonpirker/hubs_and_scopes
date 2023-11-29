@@ -22,7 +22,7 @@ async def main():
     assert sentry_sdk.Scope.get_current_scope().get_merged_scope_data() == {"gtag1": "g1"}  # this is what sentry_sdk.capure_event() sends.
     sentry_sdk.capture_event({"name": "gevent1"})
 
-    async with sentry_sdk.aisolated_scope() as isolated_scope:
+    with sentry_sdk.isolated_scope() as isolated_scope:
         isolated_scope.set_tag("itag2", "i1")
         assert isolated_scope.get_tags() == {"itag2": "i1"}
         assert sentry_sdk.Scope.get_current_scope().get_merged_scope_data() == {"gtag1": "g1", "itag2": "i1"}  # this is what sentry_sdk.capure_event() sends.
@@ -34,13 +34,13 @@ async def main():
         assert sentry_sdk.Scope.get_current_scope().get_merged_scope_data() == {"gtag1": "g1", "itag2": "i1", "tag2": "1"}  # this is what sentry_sdk.capure_event() sends.
         sentry_sdk.capture_event({"name": "event1"})
 
-        async with sentry_sdk.aisolated_scope() as isolated_scope:
+        with sentry_sdk.isolated_scope() as isolated_scope:
             isolated_scope.set_tag("itag2", "i2")
             assert isolated_scope.get_tags() == {"itag2": "i2", "tag2": "1"}
             assert sentry_sdk.Scope.get_current_scope().get_merged_scope_data() == {"gtag1": "g1", "itag2": "i2", "tag2": "1"}  # this is what sentry_sdk.capure_event() sends.
             sentry_sdk.capture_event({"name": "ievent2"}) 
 
-            async with sentry_sdk.anew_scope() as scope:  # did not call it "withScope" this sounds more natural
+            with sentry_sdk.new_scope() as scope:  # did not call it "withScope" this sounds more natural
                 scope.set_tag("tag4", "4")
                 assert scope.get_tags() == {"tag2": "1", "tag4": "4"}
                 assert sentry_sdk.Scope.get_current_scope().get_merged_scope_data() == {"gtag1": "g1", "itag2": "i2", "tag2": "1", "tag4": "4"}  # this is what sentry_sdk.capure_event() sends.
@@ -52,7 +52,7 @@ async def main():
                 assert sentry_sdk.Scope.get_current_scope().get_merged_scope_data() == {"gtag1": "g1", "gtag2": "g2", "itag2": "i2", "tag2": "1", "tag4": "4"}  # this is what sentry_sdk.capure_event() sends.
                 sentry_sdk.capture_event({"name": "gevent1"})
 
-        async with sentry_sdk.anew_scope() as scope:  # did not call it "withScope" this sounds more natural
+        with sentry_sdk.new_scope() as scope:  # did not call it "withScope" this sounds more natural
             scope.set_tag("tag2", "2")
             assert scope.get_tags() == {"tag2": "1", "tag2": "2"}
             assert sentry_sdk.Scope.get_current_scope().get_merged_scope_data() == {"gtag1": "g1", "gtag2": "g2", "itag2": "i1", "tag2": "1", "tag2": "2"}  # this is what sentry_sdk.capure_event() sends.
