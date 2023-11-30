@@ -1,5 +1,6 @@
 from client import Client, NoopClient
 from scope import Scope
+import globals
 
 
 def init(*args, **kwargs):
@@ -29,6 +30,10 @@ def get_isolation_scope():
 
 def get_global_scope():
     return Scope.get_global_scope()
+
+
+def set_current_scope(scope):
+    globals.sentry_current_scope.set(scope)
 
 
 def capture_event(event, additional_data=None):

@@ -127,9 +127,12 @@ class Scope:
         return self._tags
 
     def get_scope_data(self):
-        return {
-            "tags": self._tags,
-        }
+        scope_data = {}
+
+        if self._tags:
+            scope_data["tags"] = self._tags
+
+        return scope_data
 
     def merge_scope_data(self, data, additional_data=None):
         """Merges `additional_data` into `data`."""
@@ -165,7 +168,7 @@ class Scope:
         data = self.get_merged_scope_data(additional_data=aditional_data)
 
         event_payload = event
-        event_payload.setdefault("data", {}).update(data)
+        event_payload.update(data)
 
         print("Captured event {}".format(event_payload))
 
