@@ -4,6 +4,12 @@ from scope import Scope
 class NoopClient:
     def __repr__(self):
         return "<{} id={}>".format(self.__class__.__name__, id(self))
+    
+    def get_integration(name_or_class):
+        return None
+    
+    def should_send_default_pii():
+        return False
 
 
 class Client(NoopClient):

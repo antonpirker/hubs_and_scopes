@@ -3,8 +3,8 @@ from contextlib import contextmanager
 from contextvars import copy_context  # This does not exist in Python 2.7
 from functools import wraps
 
-import data
-from data import sentry_current_scope, sentry_isolation_scope
+import globals
+from globals import sentry_current_scope, sentry_isolation_scope
 
 
 # TODO: check otel impl
@@ -96,10 +96,10 @@ class Scope:
 
     @classmethod    
     def get_global_scope(cls):
-        scope = data.GLOBAL_SCOPE
+        scope = globals.SENTRY_GLOBAL_SCOPE
         if scope is None:
             scope = Scope(ty='global')
-            data.GLOBAL_SCOPE = scope
+            globals.SENTRY_GLOBAL_SCOPE = scope
 
         return scope
         
@@ -126,16 +126,23 @@ class Scope:
     def get_scope_data(self):
         return self._tags
     
-    def get_merged_scope_data(self, aditional_data=None):
+    def get_merged_scope_data(self, additional_data=None):
+        """
+        Merge all scope data into a single dict.
+        
+        Note: This should always be called from the current scope. 
+        When calling this from isolation or global scope, 
+        the values from the current scope will not be used.
+        """
         data = {}
         data.update(Scope.get_global_scope().get_scope_data())
         data.update(Scope.get_isolation_scope().get_scope_data())
         data.update(self.get_scope_data())
 
-        if isinstance(aditional_data, Scope):
-            data.update(aditional_data.get_scope_data())
-        elif isinstance(aditional_data, dict):
-            data.update(aditional_data)
+        if isinstance(additional_data, Scope):
+            data.update(additional_data.get_scope_data())
+        elif isinstance(additional_data, dict):
+            data.update(additional_data)
 
         return data
 
@@ -144,7 +151,7 @@ class Scope:
         self._tags[key] = value
   
     def capture_event(self, event, aditional_data=None):
-        data = self.get_merged_scope_data(aditional_data=aditional_data)
+        data = self.get_merged_scope_data(additional_data=aditional_data)
         print("Captured event {} / data: {}".format(event, data))
  
 
@@ -192,41 +199,3 @@ def with_isolated_scope(*args, **kwargs):
 def isolated_scope(*args, **kwargs):
     ctx = copy_context()
     return ctx.run(with_isolated_scope, *args, **kwargs)
-
-
-# # not used yet
-# @asynccontextmanager
-# async def anew_scope(*args, **kwargs):
-#     # fork current scope
-#     current_scope = Scope.get_current_scope()
-#     forked_scope = current_scope.fork()
-#     token = sentry_current_scope.set(forked_scope)
-
-#     try:
-#         yield forked_scope
-    
-#     finally:
-#         # restore original scope
-#         sentry_current_scope.reset(token)       
-
-
-# # not used yet
-# @asynccontextmanager
-# async def aisolated_scope(*args, **kwargs):
-#     # fork current scope
-#     current_scope = Scope.get_current_scope()
-#     forked_current_scope = current_scope.fork()
-#     current_token = sentry_current_scope.set(forked_current_scope)
-
-#     # fork isolation scope
-#     isolation_scope = Scope.get_isolation_scope()
-#     forked_isolation_scope = isolation_scope.fork()
-#     isolation_token = sentry_isolation_scope.set(forked_isolation_scope)
-
-#     try:
-#         yield forked_isolation_scope
-    
-#     finally:
-#         # restore original scopes
-#         sentry_current_scope.reset(current_token)
-#         sentry_isolation_scope.reset(isolation_token)       
