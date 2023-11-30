@@ -127,7 +127,20 @@ class Scope:
         return self._tags
 
     def get_scope_data(self):
-        return self._tags
+        return {
+            "tags": self._tags,
+        }
+
+    def merge_scope_data(self, data, additional_data=None):
+        """Merges `additional_data` into `data`."""
+        if additional_data is None:
+            return data
+        
+        for key, val in additional_data.items(): 
+            if key in data:
+                data[key].update(val)
+            else:
+                data[key] = val
     
     def get_merged_scope_data(self, additional_data=None):
         """
@@ -137,15 +150,14 @@ class Scope:
         When calling this from isolation or global scope, 
         the values from the current scope will not be used.
         """
-        data = {}
-        data.update(Scope.get_global_scope().get_scope_data())
-        data.update(Scope.get_isolation_scope().get_scope_data())
-        data.update(self.get_scope_data())
+        data = copy.deepcopy(Scope.get_global_scope().get_scope_data())
+        self.merge_scope_data(data, Scope.get_isolation_scope().get_scope_data())
+        self.merge_scope_data(data, self.get_scope_data())
 
         if isinstance(additional_data, Scope):
-            data.update(additional_data.get_scope_data())
+            self.merge_scope_data(data, additional_data.get_scope_data())
         elif isinstance(additional_data, dict):
-            data.update(additional_data)
+            self.merge_scope_data(data, additional_data)
 
         return data
 
