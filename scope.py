@@ -120,6 +120,10 @@ class Scope:
     def set_client(self, client):
         self.client = client
 
+    @copy_on_write("_tags")
+    def set_tag(self, key, value):
+        self._tags[key] = value
+  
     def get_tags(self):
         return self._tags
 
@@ -146,10 +150,6 @@ class Scope:
 
         return data
 
-    @copy_on_write("_tags")
-    def set_tag(self, key, value):
-        self._tags[key] = value
-  
     def capture_event(self, event, aditional_data=None):
         data = self.get_merged_scope_data(additional_data=aditional_data)
         print("Captured event {} / data: {}".format(event, data))
