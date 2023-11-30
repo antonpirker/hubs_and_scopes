@@ -11,14 +11,12 @@ class MyThread(threading.Thread):
         self.custom_scope = custom_scope
 
     def _run(self):
-        print("MyThread, custom_scope: {}".format(self.custom_scope))
-
         isolation_scope = sentry_sdk.get_isolation_scope()
-        print("MyThread, isolation_scope: {}".format(isolation_scope))
-        
         global_scope = sentry_sdk.get_global_scope()
-        print("MyThread, global_scope: {}".format(global_scope))
 
+        print("MyThread, custom_scope (passed in current scope): {}".format(self.custom_scope))
+        print("MyThread, isolation_scope: {}".format(isolation_scope))
+        print("MyThread, global_scope: {}".format(global_scope))
 
         self.custom_scope.set_tag("tag2", "mythread_custom_value")
         event_payload = sentry_sdk.capture_event({"name": "mythread_event"})
@@ -44,15 +42,14 @@ def test_scope_data_in_threads():
     sentry_sdk.init()
 
     with sentry_sdk.isolated_scope() as isolated_scope:
-        isolated_scope.set_tag("tag1", "main_thread_isolated_value")
-
         current_scope = sentry_sdk.get_current_scope()
-        print("MAIN thread, current_scope: {}".format(current_scope))
-
-        print("MAIN thread, isolation_scope: {}".format(isolated_scope))
-
         global_scope = sentry_sdk.get_global_scope()
+
+        print("MAIN thread, current_scope: {}".format(current_scope))
+        print("MAIN thread, isolation_scope: {}".format(isolated_scope))
         print("MAIN thread, global_scope: {}".format(global_scope))
+
+        isolated_scope.set_tag("tag1", "main_thread_isolated_value")
 
         thread = MyThread(current_scope)
         thread.start()
