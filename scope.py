@@ -49,14 +49,13 @@ def copy_on_write(property_name):
         @wraps(func)
         def wrapper(*args, **kwargs):
             self = args[0]
-            current_scope = sentry_current_scope.get()
 
             same_property_different_scope = (
                 self.is_forked and
                 id(getattr(self, property_name)) == id(getattr(self.original_scope, property_name))
             )
             if same_property_different_scope:
-                setattr(self, property_name, copy.deepcopy(getattr(current_scope, property_name)))
+                setattr(self, property_name, copy.deepcopy(getattr(self.original_scope, property_name)))
 
             return func(*args, **kwargs)
 
@@ -152,7 +151,13 @@ class Scope:
 
     def capture_event(self, event, aditional_data=None):
         data = self.get_merged_scope_data(additional_data=aditional_data)
-        print("Captured event {} / data: {}".format(event, data))
+
+        event_payload = event
+        event_payload.setdefault("data", {}).update(data)
+
+        print("Captured event {}".format(event_payload))
+
+        return event_payload
  
 
 def with_new_scope(*args, **kwargs):
