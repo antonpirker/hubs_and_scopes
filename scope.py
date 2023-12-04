@@ -66,9 +66,11 @@ def copy_on_write(property_name):
 
 class Scope:
     def __init__(self, ty=None, client=None):
-        self._ty = ty  # this is just for debugging, not used in actual implementation
+        self._ty = ty
         self._tags = {}
         self.original_scope = None
+        if ty == 'current':
+            self.isolation_scope = Scope.get_isolation_scope()
 
         self.set_client(client)
 

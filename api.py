@@ -36,6 +36,10 @@ def set_current_scope(scope):
     globals.sentry_current_scope.set(scope)
 
 
+def set_isolation_scope(isolation_scope):
+    globals.sentry_isolation_scope.set(isolation_scope)
+
+
 def capture_event(event, additional_data=None):
     scope = Scope.get_current_scope()
     return scope.capture_event(event, additional_data)
