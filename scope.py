@@ -69,8 +69,6 @@ class Scope:
         self._ty = ty
         self._tags = {}
         self.original_scope = None
-        if ty == 'current':
-            self.isolation_scope = Scope.get_isolation_scope()
 
         self.set_client(client)
 
