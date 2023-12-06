@@ -4,7 +4,7 @@ import globals
 def main():
     # noop client
     client = sentry_sdk.get_client()
-    assert type(client) == sentry_sdk.NoopClient
+    assert isinstance(client, sentry_sdk.NoopClient)
     assert not sentry_sdk.sentry_is_initialized()
     
     # sentry init
@@ -12,7 +12,7 @@ def main():
     assert sentry_sdk.sentry_is_initialized()
 
     client = sentry_sdk.get_client()
-    assert type(client) == sentry_sdk.Client
+    assert isinstance(client, sentry_sdk.Client)
     assert client == sentry_sdk.get_global_scope().client
 
     global_scope = sentry_sdk.get_global_scope()

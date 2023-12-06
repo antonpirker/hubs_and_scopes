@@ -1,6 +1,16 @@
 import copy
 from contextlib import contextmanager
-from contextvars import copy_context  # This does not exist in Python 2.7
+
+try:
+    from contextvars import copy_context  # This does not exist in Python 2.7
+except ImportError:
+    class NoOpContext:
+        def run(self, func, *args, **kwargs):
+            return func(*args, **kwargs)
+        
+    def copy_context():
+        return NoOpContext()
+
 from functools import wraps
 
 import globals

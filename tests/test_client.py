@@ -5,13 +5,14 @@ import sentry_sdk
 
 @pytest.mark.forked
 def test_noop_client():
+    import sentry_sdk
     client = sentry_sdk.get_client()
-    assert type(client) == sentry_sdk.NoopClient
+    assert client.__class__==sentry_sdk.NoopClient
 
     sentry_sdk.init()
 
     client = sentry_sdk.get_client()
-    assert type(client) == sentry_sdk.Client
+    assert client.__class__==sentry_sdk.Client
 
 
 @pytest.mark.forked
@@ -34,11 +35,11 @@ def test_client_on_scope_init():
     assert current_scope.client is None
     assert isolation_scope.client is None
     assert global_scope.client is not None
-    assert type(global_scope.client) == sentry_sdk.Client
+    assert global_scope.client.__class__==sentry_sdk.Client
 
     client = sentry_sdk.get_client()
     assert client is not None
-    assert type(client) == sentry_sdk.Client
+    assert client.__class__==sentry_sdk.Client
     
 
 @pytest.mark.forked
@@ -53,7 +54,7 @@ def test_client_on_scope_without_init():
     
     client = sentry_sdk.get_client()
     assert client is not None
-    assert type(client) == sentry_sdk.NoopClient
+    assert client.__class__==sentry_sdk.NoopClient
 
 
 @pytest.mark.forked

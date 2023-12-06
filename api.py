@@ -10,7 +10,7 @@ def init(*args, **kwargs):
 
 def sentry_is_initialized():
     client = Client.get_client()
-    if type(client) == NoopClient:
+    if client.__class__ == NoopClient:
         return False
     else:
         return True
