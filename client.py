@@ -9,9 +9,7 @@ class NoopClient:
     def __repr__(self):
         return "<{} id={}>".format(self.__class__.__name__, id(self))
 
-    def get_integration(name_or_class):
-        return None
-
+    # new!
     def should_send_default_pii():
         return False
 
@@ -38,7 +36,6 @@ class NoopClient:
     @property
     def dsn(self):
         # type: () -> Optional[str]
-        """Returns the configured DSN as string."""
         return None
 
     def _prepare_event(self, *args, **kwargs):
