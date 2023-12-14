@@ -4,6 +4,7 @@ try:
     from contextvars import ContextVar
 except ImportError:
     from threading import local
+
     class ContextVar(object):
         # Super-limited impl of ContextVar
 
@@ -31,6 +32,9 @@ except ImportError:
             setattr(self._local, "value", getattr(self._original_local, token))
             setattr(self._original_local, token, None)
 
+
+# Constant that's True when type checking, but False here.
+TYPE_CHECKING = False
 
 # global scope over everything
 SENTRY_GLOBAL_SCOPE = None

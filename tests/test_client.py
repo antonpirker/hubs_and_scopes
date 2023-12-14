@@ -6,13 +6,14 @@ import sentry_sdk
 @pytest.mark.forked
 def test_noop_client():
     import sentry_sdk
+
     client = sentry_sdk.get_client()
-    assert client.__class__==sentry_sdk.NoopClient
+    assert client.__class__ == sentry_sdk.NoopClient
 
     sentry_sdk.init()
 
     client = sentry_sdk.get_client()
-    assert client.__class__==sentry_sdk.Client
+    assert client.__class__ == sentry_sdk.Client
 
 
 @pytest.mark.forked
@@ -35,12 +36,12 @@ def test_client_on_scope_init():
     assert current_scope.client is None
     assert isolation_scope.client is None
     assert global_scope.client is not None
-    assert global_scope.client.__class__==sentry_sdk.Client
+    assert global_scope.client.__class__ == sentry_sdk.Client
 
     client = sentry_sdk.get_client()
     assert client is not None
-    assert client.__class__==sentry_sdk.Client
-    
+    assert client.__class__ == sentry_sdk.Client
+
 
 @pytest.mark.forked
 def test_client_on_scope_without_init():
@@ -51,17 +52,17 @@ def test_client_on_scope_without_init():
     assert current_scope.client is None
     assert isolation_scope.client is None
     assert global_scope.client is None
-    
+
     client = sentry_sdk.get_client()
     assert client is not None
-    assert client.__class__==sentry_sdk.NoopClient
+    assert client.__class__ == sentry_sdk.NoopClient
 
 
 @pytest.mark.forked
 def test_set_client_init_current():
     sentry_sdk.init()
     initial_client = sentry_sdk.get_client()
-    
+
     current_scope = sentry_sdk.get_current_scope()
     isolation_scope = sentry_sdk.get_isolation_scope()
     global_scope = sentry_sdk.get_global_scope()
@@ -72,9 +73,9 @@ def test_set_client_init_current():
     assert current_scope.client == custom_client
 
     assert isolation_scope.client is None
-    
+
     assert global_scope.client is not None
-    assert global_scope.client != custom_client 
+    assert global_scope.client != custom_client
     assert global_scope.client == initial_client
 
     client = sentry_sdk.get_client()
@@ -131,7 +132,7 @@ def test_set_client_init_isolation():
 
 
 @pytest.mark.forked
-def test_set_multiple_clients():   
+def test_set_multiple_clients():
     sentry_sdk.init()
     initial_client = sentry_sdk.get_client()
 

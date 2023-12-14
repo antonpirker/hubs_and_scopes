@@ -4,12 +4,14 @@ from contextlib import contextmanager
 try:
     from contextvars import copy_context  # This does not exist in Python 2.7
 except ImportError:
+
     class NoOpContext:
         def run(self, func, *args, **kwargs):
             return func(*args, **kwargs)
-        
+
     def copy_context():
         return NoOpContext()
+
 
 from functools import wraps
 
@@ -24,7 +26,7 @@ def copy_on_write(property_name):
     """
     # Stuff that write on scope right now:
     # - Hub.configure_scope writes the propagation context to the scope (if not existing on scope)
-    # - Hub.start_session writes the session to the scope 
+    # - Hub.start_session writes the session to the scope
     # - Hub.end_session changes data on the scope
     # - Hub.stop_auto_session_tracking changes data on the scope
     # - Hub.resume_auto_session_tracking changes data on the scope
@@ -36,7 +38,7 @@ def copy_on_write(property_name):
     # - Scope.level (_attr_setter) sets self._level  # type: int
     # - Scope.set_level sets self._level  # type: int
     # - Scope.fingerprint (_attr_setter) sets self._fingerprint  # type: Optional[List[str]]
-    #( - Scope.transaction sets self._span.containing_transaction  # type: Optional[Span]) because changes span, not scope per se
+    # ( - Scope.transaction sets self._span.containing_transaction  # type: Optional[Span]) because changes span, not scope per se
     # - Scope.set_transaction_name sets self._transaction  # type: Optional[str] and self._span.containing_transaction.name (and self._span.containing_transaction.source)
     # - Scope.user (_attr_setter) sets self._user  # type: Optional[User]
     # - Scope.set_user sets self._user  # type: Optional[User] and updates self._session
@@ -60,12 +62,15 @@ def copy_on_write(property_name):
         def wrapper(*args, **kwargs):
             self = args[0]
 
-            same_property_different_scope = (
-                self.is_forked and
-                id(getattr(self, property_name)) == id(getattr(self.original_scope, property_name))
-            )
+            same_property_different_scope = self.is_forked and id(
+                getattr(self, property_name)
+            ) == id(getattr(self.original_scope, property_name))
             if same_property_different_scope:
-                setattr(self, property_name, copy.deepcopy(getattr(self.original_scope, property_name)))
+                setattr(
+                    self,
+                    property_name,
+                    copy.deepcopy(getattr(self.original_scope, property_name)),
+                )
 
             return func(*args, **kwargs)
 
@@ -84,42 +89,42 @@ class Scope:
 
     def __repr__(self):
         return "<{} id={} ty={}>".format(self.__class__.__name__, id(self), self._ty)
-    
-    @classmethod    
+
+    @classmethod
     def get_current_scope(cls):
         scope = sentry_current_scope.get()
         if scope is None:
-            scope = Scope(ty='current')
+            scope = Scope(ty="current")
             sentry_current_scope.set(scope)
 
         return scope
 
-    @classmethod    
+    @classmethod
     def get_isolation_scope(cls):
         scope = sentry_isolation_scope.get()
         if scope is None:
-            scope = Scope(ty='isolation')
+            scope = Scope(ty="isolation")
             sentry_isolation_scope.set(scope)
 
         return scope
 
-    @classmethod    
+    @classmethod
     def get_global_scope(cls):
         scope = globals.SENTRY_GLOBAL_SCOPE
         if scope is None:
-            scope = Scope(ty='global')
+            scope = Scope(ty="global")
             globals.SENTRY_GLOBAL_SCOPE = scope
 
         return scope
-        
+
     @property
     def is_forked(self):
         return self.original_scope is not None
-    
+
     def fork(self):
         self.original_scope = self
         return copy.copy(self)
-    
+
     def isolate(self):
         # fork isolation scope
         isolation_scope = Scope.get_isolation_scope()
@@ -132,7 +137,7 @@ class Scope:
     @copy_on_write("_tags")
     def set_tag(self, key, value):
         self._tags[key] = value
-  
+
     def get_tags(self):
         return self._tags
 
@@ -148,19 +153,19 @@ class Scope:
         """Merges `additional_data` into `data`."""
         if additional_data is None:
             return data
-        
-        for key, val in additional_data.items(): 
+
+        for key, val in additional_data.items():
             if key in data:
                 data[key].update(val)
             else:
                 data[key] = val
-    
+
     def get_merged_scope_data(self, additional_data=None):
         """
         Merge all scope data into a single dict.
-        
-        Note: This should always be called from the current scope. 
-        When calling this from isolation or global scope, 
+
+        Note: This should always be called from the current scope.
+        When calling this from isolation or global scope,
         the values from the current scope will not be used.
         """
         data = copy.deepcopy(Scope.get_global_scope().get_scope_data())
@@ -183,7 +188,7 @@ class Scope:
         print("Captured event {}".format(event_payload))
 
         return event_payload
- 
+
 
 def with_new_scope(*args, **kwargs):
     # fork current scope
@@ -193,10 +198,10 @@ def with_new_scope(*args, **kwargs):
 
     try:
         yield forked_scope
-    
+
     finally:
         # restore original scope
-        sentry_current_scope.reset(token)       
+        sentry_current_scope.reset(token)
 
 
 @contextmanager
@@ -218,11 +223,11 @@ def with_isolated_scope(*args, **kwargs):
 
     try:
         yield forked_isolation_scope
-    
+
     finally:
         # restore original scopes
         sentry_current_scope.reset(current_token)
-        sentry_isolation_scope.reset(isolation_token)       
+        sentry_isolation_scope.reset(isolation_token)
 
 
 @contextmanager

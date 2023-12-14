@@ -1,6 +1,7 @@
-import pytest 
+import pytest
 
 from sentry_sdk import Scope, isolated_scope
+
 
 @pytest.mark.forked
 def test_get_isolation_scope():
@@ -10,7 +11,7 @@ def test_get_isolation_scope():
     assert isolation_scope1.client is None
     assert isolation_scope2.client is None
 
-    isolation_scope1.set_tag('tag1', 'value')
+    isolation_scope1.set_tag("tag1", "value")
     tags_scope1 = isolation_scope1.get_tags()
     tags_scope2 = isolation_scope2.get_tags()
     assert tags_scope1 == tags_scope2

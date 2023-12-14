@@ -1,4 +1,4 @@
-import pytest 
+import pytest
 
 from sentry_sdk import Scope, new_scope
 
@@ -11,7 +11,7 @@ def test_get_current_scope():
     assert scope1.client is None
     assert scope2.client is None
 
-    scope1.set_tag('tag1', 'value')
+    scope1.set_tag("tag1", "value")
     tags_scope1 = scope1.get_tags()
     tags_scope2 = scope2.get_tags()
     assert tags_scope1 == tags_scope2
