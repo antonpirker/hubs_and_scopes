@@ -7,10 +7,12 @@ if TYPE_CHECKING:
 
 class NoopClient:
     def __repr__(self):
+        # type: () -> str
         return "<{} id={}>".format(self.__class__.__name__, id(self))
 
     # new!
-    def should_send_default_pii():
+    def should_send_default_pii(self):
+        # type: () -> bool
         return False
 
     def __init__(self, *args, **kwargs):
@@ -56,7 +58,7 @@ class NoopClient:
 
     def _update_session_from_event(self, *args, **kwargs):
         # type: (*Any, **Any) -> None
-        return False
+        return None
 
     def capture_event(self, *args, **kwargs):
         # type: (*Any, **Any) -> Optional[str]

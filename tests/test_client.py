@@ -107,7 +107,7 @@ def test_set_client_init_isolation():
 
 
 @pytest.mark.forked
-def test_set_client_init_isolation():
+def test_set_client_init_global():
     sentry_sdk.init()
     initial_client = sentry_sdk.get_client()
 

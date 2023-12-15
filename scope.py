@@ -1,26 +1,24 @@
 import copy
 from contextlib import contextmanager
 
-try:
-    from contextvars import copy_context  # This does not exist in Python 2.7
-except ImportError:
-
-    class NoOpContext:
-        def run(self, func, *args, **kwargs):
-            return func(*args, **kwargs)
-
-    def copy_context():
-        return NoOpContext()
-
-
 from functools import wraps
 
 import globals
-from globals import sentry_current_scope, sentry_isolation_scope
+from globals import (
+    sentry_current_scope,
+    sentry_isolation_scope,
+    TYPE_CHECKING,
+    copy_context,
+)
+
+if TYPE_CHECKING:
+    from typing import Any, Callable, Dict, Generator, List, Optional, Union
+    from sentry_sdk import Client
 
 
 # TODO: check otel impl
 def copy_on_write(property_name):
+    # type: (str) -> Callable[[Any], Any]
     """
     Decorator that implements copy on write on a property of a class.
     """
@@ -58,8 +56,10 @@ def copy_on_write(property_name):
     # - Scope.update_from_kwargs updates local vars from given kwargs
 
     def decorator(func):
+        # type: (Callable[[Any], Any]) -> Callable[[Any], Any]
         @wraps(func)
         def wrapper(*args, **kwargs):
+            # type: (*Any, **Any) -> Any
             self = args[0]
 
             same_property_different_scope = self.is_forked and id(
@@ -81,9 +81,10 @@ def copy_on_write(property_name):
 
 class Scope:
     def __init__(self, ty=None, client=None):
+        # type: (Optional[str], Optional[Client]) -> None
         self._ty = ty
-        self._tags = {}
-        self.original_scope = None
+        self._tags = {}  # type: Dict[str, Any]
+        self.original_scope = None  # type: Optional[Scope]
 
         self.set_client(client)
 
@@ -92,6 +93,7 @@ class Scope:
 
     @classmethod
     def get_current_scope(cls):
+        # type: () -> Scope
         scope = sentry_current_scope.get()
         if scope is None:
             scope = Scope(ty="current")
@@ -101,6 +103,7 @@ class Scope:
 
     @classmethod
     def get_isolation_scope(cls):
+        # type: () -> Scope
         scope = sentry_isolation_scope.get()
         if scope is None:
             scope = Scope(ty="isolation")
@@ -110,6 +113,7 @@ class Scope:
 
     @classmethod
     def get_global_scope(cls):
+        # type: () -> Scope
         scope = globals.SENTRY_GLOBAL_SCOPE
         if scope is None:
             scope = Scope(ty="global")
@@ -119,19 +123,23 @@ class Scope:
 
     @property
     def is_forked(self):
+        # type: () -> bool
         return self.original_scope is not None
 
     def fork(self):
+        # type: () -> Scope
         self.original_scope = self
         return copy.copy(self)
 
     def isolate(self):
-        # fork isolation scope
+        # type: () -> None
+        """fork isolation scope"""
         isolation_scope = Scope.get_isolation_scope()
         forked_isolation_scope = isolation_scope.fork()
         sentry_isolation_scope.set(forked_isolation_scope)
 
-    def set_client(self, client):
+    def set_client(self, client=None):
+        # type: (Optional[Client]) -> None
         self.client = client
 
     @copy_on_write("_tags")
@@ -142,6 +150,7 @@ class Scope:
         return self._tags
 
     def get_scope_data(self):
+        # type: () -> Dict[str, Any]
         scope_data = {}
 
         if self._tags:
@@ -150,9 +159,10 @@ class Scope:
         return scope_data
 
     def merge_scope_data(self, data, additional_data=None):
+        # type: (Dict[str, Any], Optional[Dict[str, Any]]) -> None
         """Merges `additional_data` into `data`."""
         if additional_data is None:
-            return data
+            return None
 
         for key, val in additional_data.items():
             if key in data:
@@ -161,6 +171,7 @@ class Scope:
                 data[key] = val
 
     def get_merged_scope_data(self, additional_data=None):
+        # type: (Optional[Union[Scope, Dict[str, Any]]]) -> Dict[str, Any]
         """
         Merge all scope data into a single dict.
 
@@ -190,8 +201,9 @@ class Scope:
         return event_payload
 
 
-def with_new_scope(*args, **kwargs):
-    # fork current scope
+def with_new_scope():
+    # type: () -> Generator[Scope, None, None]
+
     current_scope = Scope.get_current_scope()
     forked_scope = current_scope.fork()
     token = sentry_current_scope.set(forked_scope)
@@ -205,12 +217,16 @@ def with_new_scope(*args, **kwargs):
 
 
 @contextmanager
-def new_scope(*args, **kwargs):
+def new_scope():
+    # type: () -> Generator[Scope, None, None]
+    """Forks the current scope and runs the wrapped code in it."""
     ctx = copy_context()  # This does not exist in Python 2.7
-    return ctx.run(with_new_scope, *args, **kwargs)
+    return ctx.run(with_new_scope)
 
 
-def with_isolated_scope(*args, **kwargs):
+def with_isolated_scope():
+    # type: () -> Generator[Scope, None, None]
+
     # fork current scope
     current_scope = Scope.get_current_scope()
     forked_current_scope = current_scope.fork()
@@ -231,6 +247,8 @@ def with_isolated_scope(*args, **kwargs):
 
 
 @contextmanager
-def isolated_scope(*args, **kwargs):
+def isolated_scope():
+    # type: () -> Generator[Scope, None, None]
+    """Forks the current isolation scope (and the related current scope) and runs the wrapped code in it."""
     ctx = copy_context()
-    return ctx.run(with_isolated_scope, *args, **kwargs)
+    return ctx.run(with_isolated_scope)
